@@ -1,13 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Healthcare from './Healthcare';
 import './App.css';
-import { exportToDPF } from './utils/exportToPDF';
-
-
-const handleExport = () => {
-  exportToDPF('Hello, this is my PDF content!'); // Replace with your content.
-};
-
+import LoginPage from './pages/login';
 
 function App() {
   const [account, setAccount] = useState(null);
@@ -21,9 +15,11 @@ function App() {
     treatment: ''
   });
 
+  
+
   useEffect(() => {
     connectWallet();
-  }, []);
+  }, []); 
 
   const connectWallet = async () => {
     const success = await Healthcare.init();
@@ -79,10 +75,12 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-200 p-6">
+    
+    <div className="min-h-screen bg-green-400 p-6">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">Hệ thống Quản lý Hồ sơ Bệnh án</h1>
-        
+        {/* <LoginPage /> */}
+        <br />
         {!account ? (
           <button
             onClick={connectWallet}
@@ -119,7 +117,6 @@ function App() {
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                     />
                   </div>
-                  <br />
                   <button
                     onClick={fetchRecords}
                     className="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 transition"
@@ -127,13 +124,6 @@ function App() {
                     Xem Hồ sơ Bệnh nhân
                   </button>
                 </div>
-                <br />
-                <button
-                  onClick={handleExport}
-                  className="w-full bg-gray-600 text-white font-semibold py-2 rounded-lg hover:bg-gray-700 transition"
-                >
-                  Xuất sang PDF
-                </button>
               </div>
             ) : (
               <div className="bg-white bg-opacity-90 p-8 rounded-xl shadow-2xl max-w-md mx-auto mt-10">
@@ -225,9 +215,10 @@ function App() {
           </div>
         )}
       </div>
-      
     </div>
+    
   );
+
 }
 
 export default App;

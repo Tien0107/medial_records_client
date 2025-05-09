@@ -3,27 +3,20 @@ import "./login.css";
 import RegisterPage from "./register";
 // import { useNavigate } from "react-router-dom";
 
-const LoginPage = () => {
+const HomePage = () => {
     // const navigate = useNavigate();
 
   return (
     <form className="space-y-4 p-4 bg-white rounded-xl shadow-md">
         <div class="form-container">
             <div class="form">
-                <span class="heading">LOGIN</span>
-                <input class="input" type="text" placeholder="Tài Khoản" />
-                <input class="input" type="text" placeholder="Password" />
-                
+                <span class="heading">HỆ THỐNG QUẢN LÝ HỒ SƠ BỆNH ÁN</span>
                 <span class="c2">Đăng Nhập Và Quản Lý Hồ Sơ Của Bạn!</span>
-                {/* <div className="metamask-button" onClick={connectMetamask}>
-              Đăng Nhập Với Metamask
-            </div> */}
                 <div class="button-container">
                 <div class="send-button">Login</div>
                 <div class="reset-button-container">
                 <div class="reset-button" id="reset-btn">Register </div>
-                {/* <div class="reset-button" id="reset-btn" onClick={() => navigate("/register")} >Register 
-                </div> */}
+    
       </div>
       
     </div>
@@ -33,4 +26,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default HomePage;

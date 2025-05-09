@@ -82,16 +82,6 @@ class Healthcare {
     }
   }
 
-  async registerAsPatient() {
-    try {
-      await this.contract.methods.registerAsPatient().send({ from: this.account });
-      return true;
-    } catch (error) {
-      console.error('Lỗi khi đăng ký bệnh nhân:', error);
-      return false;
-    }
-  }
-
   getAccount() {
     return this.account;
   }
