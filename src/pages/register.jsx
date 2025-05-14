@@ -1,9 +1,14 @@
 import React from "react";
-import "./login.css";
+import "./login_register.css";
+import { useNavigate } from "react-router-dom";
+import "./login.jsx"
 
 const RegisterPage = () => {
+   const navigate = useNavigate();
+
+
   return (
-    <form className="space-y-4 p-4 bg-white rounded-xl shadow-md">
+    <form className="space-y-4 p-4 rounded-xl shadow-md">
         <div class="form-container">
             <div class="form">
                 <span class="heading">Register</span>
@@ -19,7 +24,7 @@ const RegisterPage = () => {
                 <div class="button-container">
                 <div class="send-button">Register</div>
                 <div class="reset-button-container">
-                <div class="reset-button" id="reset-btn">Login</div>
+                <div class="reset-button" id="reset-btn" onClick={() => navigate("/login")} >Login</div>
       </div>
     </div>
   </div>
