@@ -112,4 +112,5 @@ export const MedicalRecordABI = [
   }
 ];
 
-export const MedicalRecordAddress = "0xD8A18d7B7A88B516Fa781d6124e5A73E165b8652"; // Địa chỉ contract đúng
+export const MedicalRecordAddress = import.meta.env.VITE_MEDICAL_RECORD_ADDRESS;
+// export const MedicalRecordAddress = "0xD8A18d7B7A88B516Fa781d6124e5A73E165b8652";
