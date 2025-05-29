@@ -1,33 +1,34 @@
-
 import React, { useState, useEffect } from 'react';
-import Healthcare from '../Healthcare';
+import { ethers } from 'ethers';
+import { MedicalRecordABI, MedicalRecordAddress } from '../contractConfig';
 import '../App.css';
-
 
 function HomePage() {
   const [account, setAccount] = useState(null);
-  const [isDoctor, setIsDoctor] = useState(false);
   const [records, setRecords] = useState([]);
   const [uploadStatus, setUploadStatus] = useState('');
   const [formData, setFormData] = useState({
-    patientID: '',
     patientName: '',
     diagnosis: '',
-    treatment: ''
   });
-
-  
 
   useEffect(() => {
     connectWallet();
   }, []); 
 
   const connectWallet = async () => {
-    const success = await Healthcare.init();
-    if (success) {
-      setAccount(Healthcare.getAccount());
-    } else {
-      alert('Vui lòng cài đặt Metamask!');
+    try {
+      if (!window.ethereum) {
+        alert('Vui lòng cài đặt Metamask!');
+        return;
+      }
+      const accounts = await window.ethereum.request({
+        method: "eth_requestAccounts",
+      });
+      setAccount(accounts[0]);
+    } catch (error) {
+      console.error("Error connecting wallet:", error);
+      alert("Kết nối ví thất bại!");
     }
   };
 
@@ -40,46 +41,67 @@ function HomePage() {
 
   const handleAddRecord = async () => {
     try {
-      await Healthcare.addRecord(
-        formData.patientID,
-        formData.patientName,
-        formData.diagnosis,
-        formData.treatment
-      );
-      alert('Thêm hồ sơ thành công!');
-      fetchRecords();
-    } catch (error) {
-      alert('Lỗi khi thêm hồ sơ: ' + error.message);
-    }
-  };
+      if (!formData.patientName || !formData.diagnosis) {
+        setUploadStatus('Lỗi: Vui lòng điền đầy đủ thông tin');
+        return;
+      }
 
-  const handleUploadRecord = async () => {
-    try {
-      setUploadStatus('Đang tải lên...');
-      await Healthcare.uploadRecord(
-        formData.patientID,
-        formData.patientName,
-        formData.diagnosis,
-        formData.treatment
-      );
-      setUploadStatus('Tải lên thành công!');
+      setUploadStatus('Đang tải lên IPFS...');
+      
+      // Tạo provider và signer
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const contract = new ethers.Contract(MedicalRecordAddress, MedicalRecordABI, signer);
+
+      // TODO: Thêm logic upload lên IPFS ở đây
+      const ipfsHash = "QmExample"; // Thay thế bằng hash thực từ IPFS
+
+      // Thêm hồ sơ vào smart contract
+      const tx = await contract.addRecord(ipfsHash);
+      await tx.wait();
+
+      setUploadStatus('Thêm hồ sơ thành công!');
+      // Reset form
+      setFormData({
+        patientName: '',
+        diagnosis: '',
+      });
+      // Refresh danh sách hồ sơ
+      fetchRecords();
     } catch (error) {
       setUploadStatus('Lỗi: ' + error.message);
     }
   };
 
   const fetchRecords = async () => {
-    if (formData.patientID) {
-      const patientRecords = await Healthcare.getPatientRecords(formData.patientID);
-      setRecords(patientRecords);
+    try {
+      setUploadStatus('Đang tải danh sách hồ sơ...');
+      
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const contract = new ethers.Contract(MedicalRecordAddress, MedicalRecordABI, signer);
+
+      // Lấy hồ sơ của bệnh nhân hiện tại
+      const [hashes, timestamps] = await contract.viewRecords(account);
+      
+      // TODO: Thêm logic lấy dữ liệu từ IPFS ở đây
+      const recordsData = hashes.map((hash, index) => ({
+        ipfsHash: hash,
+        timestamp: new Date(Number(timestamps[index]) * 1000).toLocaleString(),
+        // Thêm các thông tin khác từ IPFS
+      }));
+
+      setRecords(recordsData);
+      setUploadStatus('');
+    } catch (error) {
+      setUploadStatus('Lỗi: ' + error.message);
     }
   };
 
   return (
-    
-    <div className="min-h-screen bg-green-400 p-6">
+    <div className="min-h-screen bg-white p-6">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">Hệ thống Quản lý Hồ sơ Bệnh án</h1>
+        <h1 className="text-3xl font-bold mb-6 text-black">Hệ thống Quản lý Hồ sơ Bệnh án</h1>
         <br />
         {!account ? (
           <button
@@ -90,111 +112,50 @@ function HomePage() {
           </button>
         ) : (
           <div>
-            <p className="mb-4">Tài khoản: {account}</p>
-            
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700">Vai trò</label>
-              <select
-                onChange={(e) => setIsDoctor(e.target.value === 'doctor')}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-              >
-                <option value="patient">Bệnh nhân</option>
-                <option value="doctor">Bác sĩ</option>
-              </select>
-            </div>
+            <p className="mb-4 text-black">Tài khoản: {account}</p>
 
-            {isDoctor ? (
-              <div className="bg-white bg-opacity-90 p-8 rounded-xl shadow-2xl max-w-md mx-auto mt-10">
-                <h2 className="text-2xl font-bold mb-6 text-center text-blue-700">Chức năng Bác sĩ</h2>
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-base font-medium text-gray-700 mb-1">ID Bệnh nhân cần xem</label>
-                    <input
-                      type="text"
-                      name="patientID"
-                      value={formData.patientID}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    />
-                  </div>
+            <div className="bg-green-50 p-8 rounded-xl shadow-2xl max-w-md mx-auto mt-10">
+              <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Thông tin Hồ sơ</h2>
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-base font-medium text-gray-800 mb-1">Tên Bệnh nhân</label>
+                  <input
+                    type="text"
+                    name="patientName"
+                    value={formData.patientName}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 bg-white text-gray-800"
+                  />
+                </div>
+                <div>
+                  <label className="block text-base font-medium text-gray-800 mb-1">Chẩn đoán</label>
+                  <textarea
+                    name="diagnosis"
+                    value={formData.diagnosis}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 bg-white text-gray-800"
+                    rows="3"
+                  />
+                </div>
+                <div className="flex flex-col gap-3 mt-4">
+                  <button
+                    onClick={handleAddRecord}
+                    className="w-full bg-green-600 text-white font-semibold py-2 rounded-lg hover:bg-green-700 transition"
+                  >
+                    Thêm Hồ sơ
+                  </button>
                   <button
                     onClick={fetchRecords}
-                    className="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 transition"
+                    className="w-full bg-gray-600 text-white font-semibold py-2 rounded-lg hover:bg-gray-700 transition"
                   >
-                    Xem Hồ sơ Bệnh nhân
+                    Xem Hồ sơ
                   </button>
                 </div>
+                {uploadStatus && (
+                  <p className={`mt-2 text-center ${uploadStatus.includes('Lỗi') ? 'text-red-600' : 'text-green-600'}`}>{uploadStatus}</p>
+                )}
               </div>
-            ) : (
-              <div className="bg-white bg-opacity-90 p-8 rounded-xl shadow-2xl max-w-md mx-auto mt-10">
-                <h2 className="text-2xl font-bold mb-6 text-center text-blue-700">Thông tin Hồ sơ</h2>
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-base font-medium text-gray-700 mb-1">ID Bệnh nhân</label>
-                    <input
-                      type="text"
-                      name="patientID"
-                      value={formData.patientID}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-base font-medium text-gray-700 mb-1">Tên Bệnh nhân</label>
-                    <input
-                      type="text"
-                      name="patientName"
-                      value={formData.patientName}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-base font-medium text-gray-700 mb-1">Chẩn đoán</label>
-                    <textarea
-                      name="diagnosis"
-                      value={formData.diagnosis}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-                      rows="3"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-base font-medium text-gray-700 mb-1">Điều trị</label>
-                    <textarea
-                      name="treatment"
-                      value={formData.treatment}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-                      rows="3"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-3 mt-4">
-                    <button
-                      onClick={handleAddRecord}
-                      className="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 transition"
-                    >
-                      Thêm Hồ sơ
-                    </button>
-                    <button
-                      onClick={handleUploadRecord}
-                      className="w-full bg-green-600 text-white font-semibold py-2 rounded-lg hover:bg-green-700 transition"
-                    >
-                      Sửa Hồ sơ
-                    </button>
-                    <button
-                      onClick={fetchRecords}
-                      className="w-full bg-gray-600 text-white font-semibold py-2 rounded-lg hover:bg-gray-700 transition"
-                    >
-                      Xem Hồ sơ
-                    </button>
-                  </div>
-                  {uploadStatus && (
-                    <p className={`mt-2 text-center ${uploadStatus.includes('Lỗi') ? 'text-red-600' : 'text-green-600'}`}>{uploadStatus}</p>
-                  )}
-                </div>
-              </div>
-            )}
+            </div>
 
             {records.length > 0 && (
               <div className="mt-6">
@@ -202,11 +163,18 @@ function HomePage() {
                 <div className="space-y-4">
                   {records.map((record, index) => (
                     <div key={index} className="bg-white p-4 rounded shadow">
-                      <p><strong>ID:</strong> {record.recordID}</p>
-                      <p><strong>Tên:</strong> {record.patientName}</p>
-                      <p><strong>Chẩn đoán:</strong> {record.diagnosis}</p>
-                      <p><strong>Điều trị:</strong> {record.treatment}</p>
-                      <p><strong>Thời gian:</strong> {new Date(record.timestamp * 1000).toLocaleString()}</p>
+                      <p><strong>Thời gian:</strong> {record.timestamp}</p>
+                      <p className="text-sm text-gray-500">
+                        <strong>IPFS Hash:</strong> {record.ipfsHash}
+                      </p>
+                      <a 
+                        href={`https://ipfs.io/ipfs/${record.ipfsHash}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:text-blue-700 text-sm"
+                      >
+                        Xem trên IPFS
+                      </a>
                     </div>
                   ))}
                 </div>
@@ -216,9 +184,7 @@ function HomePage() {
         )}
       </div>
     </div>
-    
   );
-
 }
 
 export default HomePage;

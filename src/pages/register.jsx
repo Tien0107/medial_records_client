@@ -1,16 +1,18 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./login_register.css";
+import { ethers } from "ethers";
+import { MedicalRecordABI, MedicalRecordAddress } from "../contractConfig";
 
 const RegisterPage = () => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    wallet: "",
     fullName: "",
     email: "",
     phone: "",
     nationalId: "",
-    role: "patient", // Mặc định là "patient"
+    role: "patient",
   });
   const [message, setMessage] = useState("");
 
@@ -18,31 +20,79 @@ const RegisterPage = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const connectWallet = async () => {
+    try {
+      if (!window.ethereum) {
+        alert("Bạn cần cài MetaMask trước!");
+        return;
+      }
+
+      // Kết nối với MetaMask
+      const accounts = await window.ethereum.request({
+        method: "eth_requestAccounts",
+      });
+      const wallet = accounts[0];
+      setFormData(prev => ({ ...prev, wallet }));
+    } catch (error) {
+      console.error("Error connecting wallet:", error);
+      alert("Kết nối ví thất bại!");
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const payload = {
-      wallet: formData.wallet,
-      fullName: formData.fullName,
-      email: formData.email,
-      phone: formData.phone,
-      nationalId: formData.nationalId,
-      role: formData.role,
-    };
+    setLoading(true);
 
     try {
+      if (!formData.wallet) {
+        alert("Vui lòng kết nối ví trước!");
+        return;
+      }
+
+      // Kết nối với smart contract
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const contract = new ethers.Contract(MedicalRecordAddress, MedicalRecordABI, signer);
+
+      // Đăng ký trên smart contract
+      if (formData.role === "patient") {
+        await contract.registerAsPatient();
+      } else {
+        await contract.registerAsDoctor();
+      }
+
+      // Tạo URLSearchParams object
+      const formDataToSend = new URLSearchParams();
+      formDataToSend.append('wallet', formData.wallet);
+      formDataToSend.append('fullName', formData.fullName);
+      formDataToSend.append('email', formData.email);
+      formDataToSend.append('phone', formData.phone);
+      formDataToSend.append('nationalId', formData.nationalId);
+      formDataToSend.append('role', formData.role);
+
+      // Đăng ký trên backend
       const response = await fetch("https://backend-medical-record.onrender.com/api/v1/auth/register", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        headers: { 
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Accept": "application/json"
+        },
+        body: formDataToSend.toString()
       });
+
       const data = await response.json();
-      setMessage(data.message);
+      
       if (response.ok) {
-        setTimeout(() => navigate("/login"), 2000); // Chuyển hướng sau 2s
+        setMessage("Đăng ký thành công! Chuyển hướng đến trang đăng nhập...");
+        setTimeout(() => navigate("/login"), 2000);
+      } else {
+        setMessage(data.message || "Đăng ký thất bại!");
       }
     } catch (error) {
-      setMessage("Error: " + error.message);
+      console.error("Registration failed:", error);
+      setMessage("Đăng ký thất bại: " + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -80,15 +130,6 @@ const RegisterPage = () => {
           <input
             className="input"
             type="text"
-            name="wallet"
-            placeholder="Kết Nối Ví Điện Tử"
-            value={formData.wallet}
-            onChange={handleChange}
-            required
-          />
-          <input
-            className="input"
-            type="text"
             name="nationalId"
             placeholder="Số Chứng Minh Nhân Dân"
             value={formData.nationalId}
@@ -97,23 +138,37 @@ const RegisterPage = () => {
           <select
             className="input"
             name="role"
-            placeholder="Vai Trò"
             value={formData.role}
             onChange={handleChange}
           >
             <option value="patient">Patient</option>
             <option value="doctor">Doctor</option>
           </select>
-          <span className="c2">Đăng Ký Và Quản Lý Hồ Sơ Của Bạn!</span>
+          
           <div className="button-container">
-            <button type="submit" className="send-button">
-              Register
+            <button 
+              type="button" 
+              className="send-button"
+              onClick={connectWallet}
+            >
+              {formData.wallet ? "Đã kết nối ví" : "Kết nối ví"}
+            </button>
+          </div>
+
+          <span className="c2">Đăng Ký Và Quản Lý Hồ Sơ Của Bạn!</span>
+          
+          <div className="button-container">
+            <button 
+              type="submit" 
+              className="send-button"
+              disabled={loading}
+            >
+              {loading ? "Đang đăng ký..." : "Register"}
             </button>
             <div className="reset-button-container">
               <button
                 type="button"
                 className="reset-button"
-                id="reset-btn"
                 onClick={() => navigate("/login")}
               >
                 Login

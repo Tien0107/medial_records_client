@@ -1,29 +1,9 @@
 export const MedicalRecordABI = [
   {
-    "inputs": [],
-    "stateMutability": "nonpayable",
-    "type": "constructor"
-  },
-  {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "patientID",
-        "type": "uint256"
-      },
-      {
         "internalType": "string",
-        "name": "patientName",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "diagnosis",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "treatment",
+        "name": "ipfsHash",
         "type": "string"
       }
     ],
@@ -36,23 +16,34 @@ export const MedicalRecordABI = [
     "inputs": [
       {
         "internalType": "address",
-        "name": "provider",
+        "name": "patient",
         "type": "address"
       }
     ],
-    "name": "authorizeProvider",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "name": "viewRecords",
+    "outputs": [
+      {
+        "internalType": "string[]",
+        "name": "",
+        "type": "string[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "",
+        "type": "uint256[]"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [],
-    "name": "getOwner",
+    "name": "getGrantedDoctors",
     "outputs": [
       {
-        "internalType": "address",
+        "internalType": "address[]",
         "name": "",
-        "type": "address"
+        "type": "address[]"
       }
     ],
     "stateMutability": "view",
@@ -61,49 +52,55 @@ export const MedicalRecordABI = [
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "patientID",
-        "type": "uint256"
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
-    "name": "getPatientRecords",
+    "name": "isPatient",
     "outputs": [
       {
-        "components": [
-          {
-            "internalType": "uint256",
-            "name": "recordID",
-            "type": "uint256"
-          },
-          {
-            "internalType": "string",
-            "name": "patientName",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "diagnosis",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "treatment",
-            "type": "string"
-          },
-          {
-            "internalType": "uint256",
-            "name": "timestamp",
-            "type": "uint256"
-          }
-        ],
-        "internalType": "struct HealthcareRecords.Record[]",
+        "internalType": "bool",
         "name": "",
-        "type": "tuple[]"
+        "type": "bool"
       }
     ],
     "stateMutability": "view",
     "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "isDoctor",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "registerAsPatient",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "registerAsDoctor",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
   }
 ];
 
-export const MedicalRecordAddress = "0x9bb3666603d7dd15502cd22ece19fd33331e30bc"; // Địa chỉ contract sau khi deploy
+export const MedicalRecordAddress = "0xD8A18d7B7A88B516Fa781d6124e5A73E165b8652"; // Địa chỉ contract đúng

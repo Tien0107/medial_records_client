@@ -18,7 +18,7 @@ const WellcomePage = () => {
           <span className="c2">Đăng Nhập Và Quản Lý Hồ Sơ Của Bạn!</span>
           <div className="button-container">
             <div className="send-button" onClick={goToLogin}>
-              Login
+              Truy cập
             </div>
             <div className="reset-button-container">
               <div className="reset-button" id="reset-btn" onClick={goToRegister}>

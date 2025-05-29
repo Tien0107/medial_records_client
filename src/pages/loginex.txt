@@ -1,6 +1,10 @@
+THAT IS FOR WTF :))
+
+
 import React, { useState, useEffect } from "react";
 import "./login_register.css";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import { ethers } from "ethers";
 import { MedicalRecordABI, MedicalRecordAddress } from "../contractConfig";
 
@@ -10,32 +14,45 @@ const LoginPage = () => {
   const [walletAddress, setWalletAddress] = useState("");
 
   useEffect(() => {
+    // Kiểm tra xem đã đăng nhập chưa
     const token = localStorage.getItem("access_token");
     const role = localStorage.getItem("user_role");
     if (token && role) {
-      navigate(role === "doctor" ? "/doctor" : "/home");
+      navigate(role === "doctor" ? "/doctor" : "/patient");
     }
   }, [navigate]);
 
-  const connectWalletAndLogin = async () => {
+  const connectWallet = async () => {
     try {
-      setLoading(true);
-
       if (!window.ethereum) {
-        alert("Bạn cần cài MetaMask trước!");
+        alert("Vui lòng cài đặt MetaMask!");
         return;
       }
 
-      // Kết nối với MetaMask
-      const accounts = await window.ethereum.request({
-        method: "eth_requestAccounts",
-      });
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const accounts = await provider.send("eth_requestAccounts", []);
       const wallet = accounts[0];
       setWalletAddress(wallet);
+      return wallet;
+    } catch (error) {
+      console.error("Lỗi kết nối ví:", error);
+      alert("Kết nối ví thất bại!");
+      return null;
+    }
+  };
+
+  const handleLogin = async () => {
+    try {
+      setLoading(true);
+      const wallet = await connectWallet();
+      
+      if (!wallet) {
+        return;
+      }
 
       // Kiểm tra đăng ký trên smart contract
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
       const contract = new ethers.Contract(MedicalRecordAddress, MedicalRecordABI, signer);
 
       const isPatient = await contract.isPatient(wallet);
@@ -47,36 +64,31 @@ const LoginPage = () => {
         return;
       }
 
-      // Tạo URLSearchParams object
-      const formData = new URLSearchParams();
-      formData.append('wallet', wallet);
-
-      // Gửi request login lên backend
-      const response = await fetch("https://backend-medical-record.onrender.com/api/v1/auth/sign-in", {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/x-www-form-urlencoded",
-          "Accept": "application/json"
-        },
-        body: formData.toString()
+      // Đăng nhập với backend
+      const response = await axios.post("https://backend-medical-record.onrender.com/api/v1/auth/sign-in", {
+        wallet: wallet
       });
 
-      const data = await response.json();
-
-      if (data.status === "success") {
-        const { token, role } = data.data;
+      if (response.data.status === "success") {
+        const { token, role } = response.data.data;
+        
+        // Lưu thông tin đăng nhập
         localStorage.setItem("access_token", token);
         localStorage.setItem("user_role", role);
         localStorage.setItem("wallet_address", wallet);
 
         // Chuyển hướng dựa vào role
-        navigate(role === "doctor" ? "/doctor" : "/home");
+        if (role === "doctor") {
+          navigate("/doctor");
+        } else {
+          navigate("/patient");
+        }
       } else {
-        alert(data.message || "Đăng nhập thất bại!");
+        alert(response.data.message || "Đăng nhập thất bại!");
       }
-    } catch (err) {
-      console.error("Login failed:", err);
-      alert("Đăng nhập thất bại!");
+    } catch (error) {
+      console.error("Lỗi đăng nhập:", error);
+      alert(error.response?.data?.message || "Đăng nhập thất bại!");
     } finally {
       setLoading(false);
     }
@@ -95,7 +107,7 @@ const LoginPage = () => {
         <div className="button-container">
           <button 
             className="send-button" 
-            onClick={connectWalletAndLogin}
+            onClick={handleLogin}
             disabled={loading}
           >
             {loading ? "Đang đăng nhập..." : walletAddress ? "Đăng Nhập" : "Kết Nối Ví"}
