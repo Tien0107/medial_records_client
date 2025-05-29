@@ -101,7 +101,7 @@ function HomePage() {
   return (
     <div className="min-h-screen bg-white p-6">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6 text-black">Hệ thống Quản lý Hồ sơ Bệnh án</h1>
+        <h1 className="text-3xl font-bold mb-6 text-black">Hệ thống Quản lý Hồ sơ Bệnh án </h1>
         <br />
         {!account ? (
           <button
@@ -112,6 +112,19 @@ function HomePage() {
           </button>
         ) : (
           <div>
+            <button
+              className="mb-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+              onClick={() => {
+                localStorage.clear();
+                if (window.ethereum && window.ethereum.selectedAddress) {
+                  // Một số wallet hỗ trợ phương thức này, nhưng MetaMask không hỗ trợ disconnect qua JS
+                  // window.ethereum.request({ method: 'eth_requestAccounts', params: [] });
+                }
+                window.location.href = "/";
+              }}
+            >
+              Đăng xuất
+            </button>
             <p className="mb-4 text-black">Tài khoản: {account}</p>
 
             <div className="bg-green-50 p-8 rounded-xl shadow-2xl max-w-md mx-auto mt-10">

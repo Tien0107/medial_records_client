@@ -8,7 +8,7 @@ const WellcomePage = () => {
   const navigate = useNavigate();
 
   const goToLogin = () => navigate("/login");
-  const goToRegister = () => navigate("/register");
+
 
   return (
     <form className="space-y-4 p-4 bg-white rounded-xl shadow-md">
@@ -20,11 +20,7 @@ const WellcomePage = () => {
             <div className="send-button" onClick={goToLogin}>
               Truy cập
             </div>
-            <div className="reset-button-container">
-              <div className="reset-button" id="reset-btn" onClick={goToRegister}>
-                Register
-              </div>
-            </div>
+            
           </div>
         </div>
       </div>

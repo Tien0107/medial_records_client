@@ -54,11 +54,23 @@ const RegisterPage = () => {
       const signer = await provider.getSigner();
       const contract = new ethers.Contract(MedicalRecordAddress, MedicalRecordABI, signer);
 
-      // Đăng ký trên smart contract
-      if (formData.role === "patient") {
-        await contract.registerAsPatient();
-      } else {
-        await contract.registerAsDoctor();
+      try {
+        // Đăng ký trên smart contract
+        if (formData.role === "patient") {
+          await contract.registerAsPatient();
+        } else {
+          await contract.registerAsDoctor();
+        }
+      } catch (error) {
+        // Nếu lỗi là đã đăng ký thì bỏ qua, tiếp tục đăng ký backend
+        if (
+          error.reason !== "This account already registered" &&
+          !String(error.message).includes("already registered")
+        ) {
+          setMessage("Đăng ký thất bại: " + error.message);
+          setLoading(false);
+          return;
+        }
       }
 
       // Tạo URLSearchParams object
@@ -83,6 +95,9 @@ const RegisterPage = () => {
       const data = await response.json();
       
       if (response.ok) {
+        if (data.data && data.data.fullName) {
+          localStorage.setItem("fullName", data.data.fullName);
+        }
         setMessage("Đăng ký thành công! Chuyển hướng đến trang đăng nhập...");
         setTimeout(() => navigate("/login"), 2000);
       } else {
